@@ -1,0 +1,47 @@
+<template>
+    <div class="slds-box slds-theme_default slds-align_absolute-center pdf-card">
+        
+        <!-- Loading State Spinner -->
+        <template lwc:if={pdfBlobUrl}>
+            <div class="slds-text-align_center">
+                <lightning-icon 
+                    icon-name="doctype:pdf" 
+                    size="large" 
+                    class="slds-m-bottom_medium">
+                </lightning-icon>
+                
+                <h2 class="slds-text-heading_medium slds-m-b-small">Your Document Is Ready</h2>
+                <p class="slds-text-color_weak slds-m-bottom_large">Choose an action below to view or save the file.</p>
+                
+                <!-- Centered Buttons Grid Container -->
+                <div class="slds-grid slds-grid_align-center slds-grid_vertical-align-center">
+                    
+                    <!-- 1. PREVIEW ACTION -->
+                    <a href={pdfBlobUrl} target="_blank" rel="noopener noreferrer" style="text-decoration: none;" class="slds-m-right_small">
+                        <button class="slds-button slds-button_brand">
+                            <lightning-icon icon-name="utility:preview" alternative-text="Preview" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                            Preview PDF
+                        </button>
+                    </a>
+
+                    <!-- 2. DOWNLOAD ACTION -->
+                    <lightning-button 
+                        variant="neutral" 
+                        label="Download PDF" 
+                        icon-name="utility:download" 
+                        onclick={handleDownload}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Fallback Spinner State -->
+        <template lwc:else>
+            <div class="slds-text-align_center">
+                <lightning-spinner alternative-text="Preparing Document Layout..." size="medium"></lightning-spinner>
+                <p class="slds-m-top_large slds-text-color_weak">Generating Secure Document Link...</p>
+            </div>
+        </template>
+
+    </div>
+</template>

@@ -1,0 +1,22 @@
+<template>
+    <lightning-card title="Document Generator" icon-name="standard:document">
+        <div class="slds-m-around_medium slds-text-align_center slds-is-relative">
+            
+            <!-- Show spinner when processing -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Generating..." size="medium"></lightning-spinner>
+            </template>
+
+            <!-- slds-hide makes the QR generation process completely invisible to the user -->
+            <div class="qr-container slds-hide" lwc:dom="manual"></div>
+            
+            <lightning-button 
+                variant="brand" 
+                label="Generate & View PDF" 
+                icon-name="utility:pdf" 
+                onclick={handleProcess}
+                disabled={isLoading}>
+            </lightning-button>
+        </div>
+    </lightning-card>
+</template>

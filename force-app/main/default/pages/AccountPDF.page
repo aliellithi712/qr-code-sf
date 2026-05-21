@@ -1,0 +1,89 @@
+<apex:page controller="AccountPdfCustomController" 
+           renderAs="pdf" 
+           showHeader="false" 
+           sidebar="false" 
+           cache="false"
+           standardStylesheets="false" 
+           applyBodyTag="false" 
+           applyHtmlTag="false">
+    <html>
+        <head>
+            <style>
+                .section {
+                    margin-bottom: 30px;
+                    padding: 10px;
+                }
+                /* Updated for smaller size and center alignment */
+                .qr-code-box {
+                    text-align: center;
+                    margin: 0 auto;
+                }
+                .qr-code-box img {
+                    width: 100px;
+                    height: 100px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    padding: 8px;
+                    text-align: left;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1 class="title" style="text-align: center;">Account Overview</h1>
+                <!-- <p style="t ext-align: center;">Generated on: {!TODAY()}</p> -->
+                <p style="text-align: center;">Generated on: {!NOW()}</p>
+            </div>
+
+            <!-- SECTION 1: QR CODE (Centered & Smaller) -->
+            <div class="section">
+                <apex:panelGroup rendered="{!NOT(ISBLANK(qrCodeVersionId))}">
+                    <div class="qr-code-box">
+                        <h4>Scan QR Code:</h4>
+                        <img src="/sfc/servlet.shepherd/version/download/{!qrCodeVersionId}" alt="Account QR Code" />
+                    </div>
+                </apex:panelGroup>
+            </div>
+
+            <!-- SECTION 2: INFO -->
+            <div class="section">
+                <h3>General Details</h3>
+                <table>
+                    <tr>
+                        <th>Account Name</th>
+                        <td>{!currentAccount.Name}</td>
+                    </tr>
+                    <tr>
+                        <th>Account Number</th>
+                        <td>{!currentAccount.AccountNumber}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone</th>
+                        <td>{!currentAccount.Phone}</td>
+                    </tr>
+                    <tr>
+                        <th>Industry</th>
+                        <td>{!currentAccount.Industry}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- SECTION 3: IF CONDITION -->
+            <div class="section">
+                <apex:outputPanel rendered="{!currentAccount.Industry == 'Technology'}">
+                    <h3>Special Tech Account Notes</h3>
+                    <p>This section only appears for Technology industry accounts.</p>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!currentAccount.Industry != 'Technology'}">
+                    <h3>Standard Account Notes</h3>
+                    <p>This section appears for all other industries.</p>
+                </apex:outputPanel>
+            </div>
+        </body>
+    </html>
+</apex:page>
