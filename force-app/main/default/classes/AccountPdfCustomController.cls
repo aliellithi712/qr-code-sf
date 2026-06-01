@@ -1,63 +1,103 @@
 public without sharing class AccountPdfCustomController {
     
     // Must match the exact secret string token used when generating the QR code link
-    private static final String SECRET_KEY = 'MySuperSecretPrivateKeyForQRVerification';
+    private static final String PRIVATE_KEY_HEX = 'a8fe3007b37b5e6474a7c5a42f35e637';
+    private static final Blob SECRET_KEY = EncodingUtil.convertFromHex(PRIVATE_KEY_HEX);
     
     public Account currentAccount { get; private set; }
     public String qrCodeVersionId { get; private set; } 
     public Boolean isValidSignature { get; private set; } // Condition variable for your <apex:outputPanel>
+    public String decryptedBlob { get; set; } // Condition variable for your <apex:outputPanel>
+    public String qrCodeBase64 { get; private set; }
+    public List<PageWrapper> pdfPages { get; private set; }
 
-    public AccountPdfCustomController() {
-        this.isValidSignature = false;
+
+    public class PageWrapper {
+        public Id qrCodeVersionId { get; set; }
+        public String city { get; set; }
+        public Account acc { get; set; }
+        
+        public PageWrapper(Id fileId, String c, Account a) {
+            this.qrCodeVersionId = fileId;
+            this.city = c;
+            this.acc = a;
+        }
+    }
+
+
+    
+
+
+    public  AccountPdfCustomController() {
+        // this.isValidSignature = false;
         
         // 1. Extract raw parameters from the URL address bar layout
-        String rawAccountId = ApexPages.currentPage().getParameters().get('id');
-        String urlSignature = ApexPages.currentPage().getParameters().get('sig');
+        String encryptedHex = ApexPages.currentPage().getParameters().get('e');
         
         try {
-            if (String.isNotBlank(rawAccountId) && String.isNotBlank(urlSignature)) {
-                
-                // FIX: Force casting to Id type to ensure a clean 18-character string length matching
-                Id accountId = (Id)rawAccountId;
-                String cleanIdStr = String.valueOf(accountId);
+            if (String.isNotBlank(encryptedHex)) {
+                /**
+                Cache.OrgPartition orgPart = Cache.Org.getPartition('local.qrCodeCache');
+                Set<String> cacheKeys = orgPart.getKeys();
+                System.debug('==========================================');
+                System.debug('CACHE DIAGNOSTICS FOR: qrCodeCache');
+                System.debug('Total Keys Found: ' + cacheKeys.size());
+                System.debug('Partition Capacity Used: ' + orgPart.getCapacity() + '%');
+                System.debug('==========================================');
+                this.qrCodeBase64 = (String)orgPart.get('Alexandria');
+                 */
                 
                 // 2. SECURITY GATE: Recompute the cryptographic SHA-256 pattern hash match
-                Blob targetBlob = Blob.valueOf(cleanIdStr + SECRET_KEY);
-                Blob hash = Crypto.generateDigest('SHA-256', targetBlob);
-                String expectedSignature = EncodingUtil.convertToHex(hash);
-                
-                // 3. VALIDATION MATCH CHECK: Only touch database records if signatures align
-                if (urlSignature.equals(expectedSignature)) {
-                    this.isValidSignature = true;
-                    
+                Blob encryptedBlob = EncodingUtil.convertFromHex(encryptedHex);
+                Blob tempDecryptedBlob = Crypto.decryptWithManagedIV('AES128', SECRET_KEY, encryptedBlob);
+                this.decryptedBlob = tempDecryptedBlob.toString();
+                List<String> splitValues = this.decryptedBlob.split('\\|');
+
+                Id accountId = null;
+                // FIX: Initialize the list instead of leaving it null
+                List<String> cities = new List<String>(); 
+
+                // Guard against missing values to avoid IndexOutOfBoundsException
+                if (splitValues.size() >= 2) {
+                    accountId = Id.valueOf(splitValues[0].trim());
+                    // for(Integer i = 1; i < splitValues.size(); i++) {
+                        // cities.add(splitValues[i].trim());
+                    // }
+                }
+
                     this.currentAccount = [
                         SELECT Name, AccountNumber, Phone, Industry 
                         FROM Account 
                         WHERE Id = :accountId 
                         LIMIT 1
                     ];
+                    System.debug('Found linked ContentDocument: ' + this.currentAccount.Name + ' . ');
+
+                    
 
                     // Query the newest ContentVersion ID linked to this record via ContentDocumentLink
+                    // String title = '%' + city + '%';
                     List<ContentDocumentLink> links = [
-                        SELECT ContentDocumentId 
+                        SELECT ContentDocumentId,ContentDocument.Title,ContentDocument.LatestPublishedVersionId
                         FROM ContentDocumentLink 
                         WHERE LinkedEntityId = :accountId 
-                        AND ContentDocument.Title LIKE 'QRCode%' // Adjusted slightly to support flexible naming variations safely
-                        LIMIT 1
+                        AND ContentDocument.Title LIKE '%QRCode%'
+                        // LIMIT 1
                     ];
-
+                    
                     if (!links.isEmpty()) {
-                        ContentVersion cv = [
-                            SELECT Id 
-                            FROM ContentVersion 
-                            WHERE ContentDocumentId = :links[0].ContentDocumentId 
-                            AND IsLatest = true 
-                            LIMIT 1
-                        ];
-                        this.qrCodeVersionId = cv.Id;
-                    }
-                }
+                        this.pdfPages = new List<PageWrapper>();
+                        for (ContentDocumentLink l : links) {
+                            this.pdfPages.add(new PageWrapper(
+                                l.ContentDocument.LatestPublishedVersionId, 
+                                l.ContentDocument.Title.split('_QRCode')[0] , 
+                                this.currentAccount.clone(true, true, false, false))
+                                );                            
+                        }
+
             }
+        }
+            
         } catch (Exception e) {
             this.isValidSignature = false;
             System.debug('Security parameters verification check failed: ' + e.getMessage());

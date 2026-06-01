@@ -1,0 +1,12 @@
+{
+  "activeViewId" : "b9234e2d-c16e-4913-be28-d9203535d59b",
+  "appPageId" : "40645fb8-5f3f-48a9-b531-2877e89ae69d",
+  "configurationTags" : [ ],
+  "devName" : "noaccess__c",
+  "id" : "a01dd4a3-7853-44f7-880f-324cca317f99",
+  "label" : "noaccess",
+  "pageAccess" : "UseParent",
+  "routeType" : "custom-noaccess",
+  "type" : "route",
+  "urlPrefix" : "noaccess"
+}

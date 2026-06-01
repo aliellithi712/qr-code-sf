@@ -1,69 +1,35 @@
-import { LightningElement, api, wire } from 'lwc';
-import getAccountPdfBase64 from '@salesforce/apex/SitePdfController.getAccountPdfBase64';
+import { LightningElement } from 'lwc';
+import getCity from '@salesforce/apex/SitePdfController.getCity';
+import getWeatherData from '@salesforce/apex/SitePdfController.getWeatherData';
 
-export default class PdfViewer extends LightningElement {
-    @api recordId;
-    base64Data;
-    error;
-    pdfDataUrl = '';
-    pdfBlobUrl;
+export default class MyComponent extends LightningElement {
+    city;
+    weather;
 
-    // Fixed: Ensure the imported method name and parameter key matches Apex perfectly
-    @wire(getAccountPdfBase64, { recordId: '$recordId' })
-    wiredPdf({ error, data }) {
-        if (data) {
-            this.base64Data = data;
-            this.processBlobUrl(data);
-            this.pdfDataUrl = `data:application/pdf;base64,${data}`;
-            
-        } else if (error) {
-            this.error = error;
-            this.base64Data = undefined;
-            console.error('Error fetching PDF blob: ', error);
-        }
+    connectedCallback() {
+        // Kick off the synchronous sequence wrapper safely
+        this.initializeComponent();
     }
 
-    processBlobUrl(base64String) {
-        // 1. Decode the base64 string back into binary characters
-        const byteCharacters = atob(base64String);
-        const byteNumbers = new Array(byteCharacters.length);
-        
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        
-        // 2. Build a raw structural byte array
-        const byteArray = new Uint8Array(byteNumbers);
-        
-        // 3. Instantiate a safe local browser Blob object
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        // 4. Create a native scheme URL ('blob:https://yourdomain...')
-        this.pdfBlobUrl = URL.createObjectURL(blob);
-    }
+    async initializeComponent() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlCity = urlParams.get('e');
 
-    
-    get isButtonDisabled() {
-        return !this.base64Data;
-    }
+            if (!urlCity) return;
 
-    get pdfUrl() {
-        // return `/apex/AccountPDF?id=${this.recordId}`;
-        return this.base64Data ? `data:application/pdf;base64,${this.base64Data}` : '';
-    }
+            // 1. Enforce execution of getCity first
+            const cityResult = await getCity({ input: urlCity });
+            console.log('1. getCity finished:', cityResult);
+            this.city = urlCity;
 
-    handleMobileOpen() {
-        if (this.base64Data) {
-            const fileIdentifier = this.recordId ? this.recordId : 'Download';
-            const fileName = `Account_Report_${fileIdentifier}.pdf`;
+            // 2. This line WILL NOT run until getCity is fully resolved
+            const secondResult = await getWeatherData({ Location: cityResult });
+            console.log('2. Dependent call finished:', secondResult);
+            this.weather = secondResult;
 
-            const downloadLink = document.createElement('a');
-            downloadLink.href = `data:application/pdf;base64,${this.base64Data}`;
-            downloadLink.download = fileName;
-            
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+        } catch (error) {
+            console.error('Error in sequence execution:', error);
         }
     }
 }

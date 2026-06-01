@@ -3,13 +3,7 @@
     <apiVersion>60.0</apiVersion>
     <isExposed>true</isExposed>
     <targets>
-        <target>lightningCommunity__Page</target>
         <target>lightningCommunity__Default</target>
+        <target>lightningCommunity__Page</target>
     </targets>
-    <targetConfigs>
-        <targetConfig targets="lightningCommunity__Default">
-            <property name="recordId" type="String" label="Record ID" default="{!recordId}"/>
-            <property name="urlSignature" type="String" label="URL Signature" default="{!sig}"/>
-        </targetConfig>
-    </targetConfigs>
 </LightningComponentBundle>
