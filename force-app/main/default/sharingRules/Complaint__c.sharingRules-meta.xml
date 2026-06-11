@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SharingRules xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sharingCriteriaRules>
+        <fullName>Dispatch</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Dispatch</label>
+        <sharedTo>
+            <group>Dispatch</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Status__c</field>
+            <operation>equals</operation>
+            <value>Dispatch,Assigned Dispatch</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Order_Execution</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Order Execution</label>
+        <sharedTo>
+            <group>Order_Execution</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Status__c</field>
+            <operation>equals</operation>
+            <value>Assigned OE,OE</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Return</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Return</label>
+        <sharedTo>
+            <group>Return</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Status__c</field>
+            <operation>equals</operation>
+            <value>Return,Assigned Return</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Telemarketing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Telemarketing</label>
+        <sharedTo>
+            <group>Telemarketing_User</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Status__c</field>
+            <operation>equals</operation>
+            <value>Draft,Assigned TM,CS Review</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingGuestRules>
+        <fullName>voucher_sharing</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>voucher sharing</label>
+        <sharedTo>
+            <guestUser>Complaint_Voucher_Pdf</guestUser>
+        </sharedTo>
+        <criteriaItems>
+            <field>Resolution__c</field>
+            <operation>notEqual</operation>
+            <value>azaz</value>
+        </criteriaItems>
+        <includeHVUOwnedRecords>false</includeHVUOwnedRecords>
+    </sharingGuestRules>
+</SharingRules>

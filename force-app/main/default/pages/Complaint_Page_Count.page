@@ -1,0 +1,257 @@
+<apex:page controller="ComplaintPDFCustomController" showHeader="false" sidebar="false" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false">
+<head>
+    <style>
+        /* Setup the base screen to look like an A4 canvas */
+        body {
+            background-color: #F0F0F0;
+            font-family: Arial, sans-serif;
+            color: #271f1f;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Replicate the PDF @page sizing and layout exactly */
+        .page-container {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            height: 297mm; /* Forced height to emulate single page boundaries */
+            box-sizing: border-box;
+            padding: 15mm 15mm 20mm 15mm; /* Matching PDF @page margins */
+            position: relative;
+            margin: 20px auto; /* Centered in browser for preview */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden; /* Prevent text spilling outside simulated page */
+        }
+
+        /* Emulate the dynamic @bottom-right PDF counter position */
+        .web-footer {
+            position: absolute;
+            bottom: 20mm;
+            right: 15mm;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .section-spacer {
+            height: 30px;
+        }
+
+        /* Utility styles to display layout safely in HTML */
+        table {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    </style>
+</head>
+<body>
+    <apex:variable var="pageIdx" value="{!0}" />
+
+    <apex:outputPanel rendered="{!NOT(showBlankPage)}" layout="none">
+        <apex:repeat value="{!pdfPages}" var="pageGroup">
+            <apex:repeat value="{!pageGroup}" var="wrapper">
+
+                <div class="page-container" data-status="{!wrapper.status}">
+
+                    <table style="width: 100%; margin-bottom: 35px; table-layout: fixed; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 180px; vertical-align: middle; text-align: left;">
+                                <apex:image url="{!URLFOR($Resource.Mersaco_Logo)}" width="180" height="90" />
+                            </td>
+                            <td style="vertical-align: middle; text-align: center; padding: 0 10px;">
+                                <h1 style="font-size: 22px; margin: 0; line-height: 1.2;">Customer Complaints Voucher</h1>
+                            </td>
+                            <td style="width: 100px; vertical-align: middle; text-align: right;">
+                                <apex:outputPanel rendered="{!pageIdx < wrapper.qrCodeIds.size}" layout="none">
+                                    <img src="/sfc/servlet.shepherd/version/download/{!wrapper.qrCodeIds[pageIdx]}" width="90" height="90" alt="QR Link" />
+                                </apex:outputPanel>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px;">
+                        <tr>
+                            <td style="width: 50%; padding: 6px 4px;">
+                                <strong>Date:</strong> {!todayDate}
+                            </td>
+                            <td style="width: 50%; padding: 6px 4px;">
+                                <strong>Reference#:</strong> {!wrapper.complaint.Name}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 4px;">
+                                <strong>Account Code / Name:</strong> {!wrapper.complaint.Account_Number__c} / {!wrapper.complaint.Account_Name__r.Name}
+                            </td>
+                            <td style="padding: 6px 4px;">
+                                <strong>Wave Description:</strong> {!wrapper.complaint.Account_Wave_ID__c}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 4px;" colspan="2">
+                                <strong>Invoice Number:</strong> {!wrapper.complaint.Invoice_Number__c}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 4px;">
+                                <strong>Order Number:</strong> {!wrapper.complaint.Order_Number__c}
+                            </td>
+                            <td style="padding: 6px 4px;">
+                                <strong>Address:</strong> {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine1__c} / {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine2__c}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 4px;" colspan="2">
+                                <strong>Complaint Type:</strong> {!wrapper.complaint.Category__c}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="section-spacer"></div>
+
+                    <apex:outputPanel rendered="{!wrapper.status == 'Sending Goods'}" layout="none">
+                        <h2 style="font-size: 15px; margin: 10px 0;">SENDING GOODS DATA:</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;" border="1">
+                            <thead style="background-color: #e8e8e8;">
+                                <tr style="height: 30px;">
+                                    <th style="padding: 6px;">Item Code</th>
+                                    <th style="padding: 6px;">Item Description</th>
+                                    <th style="padding: 6px;">Quantity</th>
+                                    <th style="padding: 6px;">Batch No.</th>
+                                    <th style="padding: 6px;">Expiry Date</th>
+                                    <th style="padding: 6px;">Frigo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!wrapper.items}" var="item">
+                                    <tr style="height: 26px;">
+                                        <td style="padding: 6px;">{!item.product_code__c}</td>
+                                        <td style="padding: 6px;">{!item.product_name__c}</td>
+                                        <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                        <td style="padding: 6px;">{!item.lot__c}</td>
+                                        <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                        <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                        <apex:repeat value="{!wrapper.items}" var="item">
+                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'Y', item.Frigo_Manual__c == 'Y')}" layout="none">
+                                <em>Storage Condition between 2-8 °C</em><br/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'N', item.Frigo_Manual__c == 'N')}" layout="none">
+                                <em>Storage Condition between 15-25 °C</em><br/>
+                            </apex:outputPanel>
+                        </apex:repeat>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!wrapper.status == 'Goods Retrieval'}" layout="none">
+                        <h2 style="font-size: 15px; margin: 10px 0;">GOODS RETRIEVAL DATA:</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;" border="1">
+                            <thead style="background-color: #e8e8e8;">
+                                <tr style="height: 30px;">
+                                    <th style="padding: 6px;">Item Code</th>
+                                    <th style="padding: 6px;">Item Description</th>
+                                    <th style="padding: 6px;">Quantity</th>
+                                    <th style="padding: 6px;">Batch No.</th>
+                                    <th style="padding: 6px;">Expiry Date</th>
+                                    <th style="padding: 6px;">Frigo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!wrapper.items}" var="item">
+                                    <tr style="height: 26px;">
+                                        <td style="padding: 6px;">{!item.product_code__c}</td>
+                                        <td style="padding: 6px;">{!item.product_name__c}</td>
+                                        <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                        <td style="padding: 6px;">{!item.lot__c}</td>
+                                        <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                        <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                        <apex:repeat value="{!wrapper.items}" var="item">
+                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'Y', item.Frigo_Manual__c == 'Y')}" layout="none">
+                                <em>Storage Condition between 2-8 °C</em><br/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'N', item.Frigo_Manual__c == 'N')}" layout="none">
+                                <em>Storage Condition between 15-25 °C</em><br/>
+                            </apex:outputPanel>
+                        </apex:repeat>
+                    </apex:outputPanel>
+
+                    <div class="section-spacer"></div>
+
+                    <h2 style="font-size: 15px; margin: 15px 0 8px 0; text-align: center;">Account Name / Signature and Stamp / Date</h2>
+                    <table style="width: 100%; border: 1px solid #000; height: 140px; margin-bottom: 35px;">
+                        <tr>
+                            <td style="height: 140px;"></td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 30px; font-size: 13px;">
+                        <p style="text-align: left; line-height: 1.5; margin-bottom: 12px;">
+                            <strong style="text-decoration: underline;">Terms and Conditions:</strong><br/>
+                            No returns will be accepted if not presented on this form, stamped, dated, and signed by the client.<br/>
+                            All goods withdrawn related to mislabeling complaints will be retrieved, returned, relabeled, and dispatched back to the customer according to the product storage conditions: Refrigerated or Ambient.
+                        </p>
+                        <p style="text-align: left; font-size: 13px; margin-bottom: 35px;">
+                            *Refer to supportive document in case complaint content does not fit on this customer complaint voucher page.*
+                        </p>
+                        <p style="text-align: right; font-size: 10px; font-style: italic; margin: 0; line-height: 1.4; padding-bottom: 20px;">
+                            CUSTOMER COMPLAINT VOUCHER — DISTRIBUTION DIVISION, LOGISTICS OPERATION.
+                        </p>
+                    </div>
+
+                    <div class="web-footer">
+                        <span class="page-number-target"></span>
+                    </div>
+
+                </div>
+
+                <apex:variable var="pageIdx" value="{!pageIdx + 1}" />
+
+            </apex:repeat>
+        </apex:repeat>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!showBlankPage}" layout="block">
+        <div class="page-container" style="background: transparent; box-shadow: none;">&nbsp;</div>
+    </apex:outputPanel>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var pages = document.querySelectorAll('.page-container');
+
+            var statusTotals = {};
+            pages.forEach(function (page) {
+                var status = page.getAttribute('data-status');
+                if (status) {
+                    statusTotals[status] = (statusTotals[status] || 0) + 1;
+                }
+            });
+
+            console.log("Calculated Total Pages per Status Group:", JSON.stringify(statusTotals, null, 2));
+            console.log("------------------------------------------------");
+
+            var statusCurrentCounters = {};
+            pages.forEach(function (page) {
+                var status = page.getAttribute('data-status');
+                if (status) {
+                    statusCurrentCounters[status] = (statusCurrentCounters[status] || 0) + 1;
+
+                    var currentPage = statusCurrentCounters[status];
+                    var totalPagesForStatus = statusTotals[status];
+
+                    var footerTarget = page.querySelector('.page-number-target');
+                    if (footerTarget) {
+                        footerTarget.innerText = "Page " + currentPage + " of " + totalPagesForStatus;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</apex:page>

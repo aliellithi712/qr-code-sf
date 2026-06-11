@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+
+    <types>
+        <members>ComplaintPDFController</members>
+        <members>ComplaintPDFCustomController</members>
+        <members>QRGenerateButtonController</members>
+        <name>ApexClass</name>
+    </types>
+
+    <types>
+        <members>qRGenerateButton</members>
+        <name>LightningComponentBundle</name>
+    </types>
+
+    <types>
+        <members>My_Community_User_PermSet</members>
+        <name>PermissionSet</name>
+    </types>
+
+    <types>
+        <members>Mersaco_Complaints_PDF</members>
+        <name>ApexPage</name>
+    </types>
+
+        <types>
+        <members>Complaint__c.Complaint_Voucher</members>
+        <name>QuickAction</name>
+    </types>
+
+    <types>
+        <members>Logistics_Complaints</members>
+        <name>FlexiPage</name>
+    </types>
+
+    <types>
+        <members>qrcode</members>
+        <name>StaticResource</name>
+    </types>
+
+    <types>
+        <members>Complaint_Voucher_Pdf</members>
+        <name>CustomSite</name>
+    </types>
+
+    <types>
+        <members>Complaint__c</members>
+        <name>SharingRules</name>
+    </types>
+
+    <types>
+        <members>Complaint_Logistics_PDF_Generation</members>
+        <name>Flows</name>
+    </types>
+
+
+    <types>
+        <members>Complaint_Status_Mapping.Additional</members>
+        <members>Complaint_Status_Mapping.Damage</members>
+        <members>Complaint_Status_Mapping.Goods_Retrieval</members>
+        <members>Complaint_Status_Mapping.Sending_Goods</members>
+        <members>Complaint_Status_Mapping.Mislabeling</members>
+        <members>Complaint_Status_Mapping.Missing</members>
+        <members>Complaint_Status_Mapping.Wrong_Docs</members>
+        <name>CustomMetadata</name>
+    </types>
+
+
+    <types>
+        <members>Complaint_Status_Mapping__mdt</members>
+        <name>CustomObject</name>
+    </types>
+
+    <types>
+    <members>Invoice_Line_Item__c.Frigo_Manual__c</members>
+    <name>CustomField</name>
+    </types>
+
+    <types>
+        <members>Invoice_Line_Item__c.Status_Category_Compliance</members>
+        <name>ValidationRule</name>
+    </types>
+
+
+    <version>61.0</version>
+</Package>

@@ -1,0 +1,136 @@
+<template>
+    <!-- Search Form + Status Screens -->
+    <lightning-card title="Get Complaints" icon-name="standard:account">
+        <!-- Success Message -->
+        <template if:true={showSuccessScreen}>
+            <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center" style="height: 300px;">
+                <h2 class="slds-text-heading_medium" style="color: green; font-weight: bold;">
+                    Complaints created successfully.
+                </h2>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={showErrorScreen}>
+            <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center" style="height: 300px;">
+                <h2 class="slds-text-heading_medium slds-text-align_center" style="color: red; font-weight: bold;">
+                    {message}
+                </h2>
+            </div>
+        </template>
+
+        <!-- Duplicate Complaint Warning Modal -->
+        <template if:true={showDuplicateWarningModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" style="width: 100vw; max-width: 100vw;">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header slds-theme_warning">
+                        <lightning-icon icon-name="utility:warning" alternative-text="Warning" variant="inverse" size="small" class="slds-m-right_small"></lightning-icon>
+                        <h2 class="slds-modal__title slds-hyphenate">Duplicate Complaints Found</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <p class="slds-text-color_weak slds-m-bottom_small">
+                            The following complaints already exist for this invoice. You can review them below.
+                        </p>
+                        <ul class="slds-list_dotted slds-m-bottom_medium">
+                            <template for:each={duplicateComplaintLinks} for:item="complaint">
+                                <li key={complaint.url}>
+                                    <a href={complaint.url} target="_blank">{complaint.name}</a>
+                                </li>
+                            </template>
+                        </ul>
+                        <p class="slds-text-color_default slds-m-top_small">
+                            Do you still want to continue fetching the invoice?
+                        </p>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="neutral" label="Cancel" onclick={cancelDueToDuplicates} class="slds-m-right_small"></lightning-button>
+                        <lightning-button variant="brand" label="Continue Anyway" onclick={continueDespiteDuplicates}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+        </template>
+
+        <!-- Search Form -->
+        <template if:false={showSection}>
+            <div class="slds-p-around_medium slds-grid slds-wrap slds-gutters">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                    <lightning-input label="Invoice Number" value={invoice} onchange={getInvoiceButton} class="slds-m-bottom_small"></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                    <lightning-combobox name="invoiceType" label="Invoice Type" value={invoiceType} placeholder="Select Invoice Type" options={invoiceOptions} onchange={handleInvoiceTypeChange} class="slds-m-bottom_small"></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-align_absolute-center">
+                    <lightning-button label="Get Invoice" variant="brand" onclick={handleGetInvoice} class="slds-m-top_small"></lightning-button>
+                </div>
+            </div>
+
+            <!-- Inline Error Message -->
+            <template if:true={message}>
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">{messageType}</span>
+                    <span>{message}</span>
+                </div>
+            </template>
+        </template>
+    </lightning-card>
+
+    <!-- Result Screen (Outside lightning-card) -->
+    <template if:true={showResponse}>
+        <div style="width: 100%; max-width: 95vw; margin: 0 auto; padding: 1rem;">
+            <!-- Header Table -->
+            <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                <lightning-datatable key-field="order_number" data={headers} columns={columns} hide-checkbox-column></lightning-datatable>
+            </div>
+
+            <!-- Line Items Table -->
+            <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                <div class="slds-text-heading_small slds-m-bottom_small">Line Items</div>
+                <div style="overflow-x:auto">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th>Select</th>
+                                <th>Product Code</th>
+                                <th style="width: 400px;">Product Name</th>
+                                <th>Quantity</th>
+                                <th>Net Price</th>
+                                <th>Tax</th>
+                                <th>Lot</th>
+                                <th>Expiry Date</th>
+                                <th>Frigo</th>
+                                <th>Status</th>
+                                <th>Variance Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={lines} for:item="line">
+                                <tr key={line.key}>
+                                    <td><input type="checkbox" data-id={line.key} onchange={handleCheckboxChange} /></td>
+                                    <td>{line.product_code}</td>
+                                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={line.product_name}>{line.product_name}</td>
+                                    <td>{line.quantity}</td>
+                                    <td>{line.net_price}</td>
+                                    <td>{line.tax}</td>
+                                    <td>{line.lot}</td>
+                                    <td>{line.expiry_date}</td>
+                                    <td>{line.frigo}</td>
+                                    <td>
+                                        <lightning-combobox data-id={line.key} value={line.status} options={statusOptions} onchange={handleStatusChange} required></lightning-combobox>
+                                    </td>
+                                    <td>
+                                        <input type="number" min="1" step="1" name="Variance Quantity" data-id={line.key} value={line.Variance_Quantity} onchange={handleQSChange} class="slds-input slds-m-left_x-small slds-m-right_x-small" style="width: 100px;" required/>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="slds-align_absolute-center slds-m-top_medium">
+                <lightning-button label="Save Complains" variant="brand" onclick={saveComplains}></lightning-button>
+            </div>
+        </div>
+    </template>
+</template>

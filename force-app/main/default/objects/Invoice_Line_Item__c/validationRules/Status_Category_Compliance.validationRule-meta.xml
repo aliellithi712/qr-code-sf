@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status_Category_Compliance</fullName>
+    <active>true</active>
+    <errorConditionFormula>OR(
+    /* Missing + Additional Mappings */
+    AND(
+        OR(
+            ISPICKVAL(Complaint__r.Category__c, &quot;Wrong Product&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Wrong Batch&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Wrong Delivery&quot;)
+        ),
+        NOT(ISPICKVAL(Status__c, &quot;Missing&quot;)),
+        NOT(ISPICKVAL(Status__c, &quot;Additional&quot;))
+    ),
+
+    /* Single Status Mappings */
+    AND(
+        ISPICKVAL(Complaint__r.Category__c, &quot;Additional Quantity/Product&quot;),
+        NOT(ISPICKVAL(Status__c, &quot;Additional&quot;))
+    ),
+    AND(
+        ISPICKVAL(Complaint__r.Category__c, &quot;Damaged/Broken&quot;),
+        NOT(ISPICKVAL(Status__c, &quot;Damage&quot;))
+    ),
+    AND(
+        OR(
+            ISPICKVAL(Complaint__r.Category__c, &quot;Documentation Issue - Wrong Credit Note&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Documentation Issue - Wrong Receipt&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Documentation Issue - Wrong/Missing Invoice&quot;)
+        ),
+        NOT(ISPICKVAL(Status__c, &quot;Wrong Docs&quot;))
+    ),
+    AND(
+        OR(
+            ISPICKVAL(Complaint__r.Category__c, &quot;Labeling Issue - Damaged&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Labeling Issue - Not Labeled&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Labeling Issue - Wrong Price Tag&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Labeling Issue - Wrong Registration Number&quot;)
+        ),
+        NOT(ISPICKVAL(Status__c, &quot;Mislabeling&quot;))
+    ),
+    AND(
+        OR(
+            ISPICKVAL(Complaint__r.Category__c, &quot;Late Arrival - Customer Complaint&quot;),
+            ISPICKVAL(Complaint__r.Category__c, &quot;Late Arrival - Dispatch&quot;)
+        ),
+        NOT(ISPICKVAL(Status__c, &quot;Order Not Received&quot;))
+    ),
+    AND(
+        ISPICKVAL(Complaint__r.Category__c, &quot;Missing Quantity&quot;),
+        NOT(ISPICKVAL(Status__c, &quot;Missing&quot;))
+    )
+)</errorConditionFormula>
+    <errorMessage>Status is not correct</errorMessage>
+</ValidationRule>

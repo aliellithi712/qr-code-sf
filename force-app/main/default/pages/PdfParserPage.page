@@ -1,0 +1,44 @@
+<apex:page lightningStylesheets="true">
+    <script src="{!URLFOR($Resource.pdfjs_dist, '/build/pdf.js')}"></script>
+    
+    <script>
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "{!URLFOR($Resource.pdfjs_dist, '/build/pdf.worker.js')}";
+
+        window.addEventListener("message", async function(event) {
+            if (event.data.type === 'SCAN_PDF') {
+                const pdfBytes = event.data.bytes;
+                const keyword = event.data.keyword.toLowerCase(); // Lowercase for case-insensitive match
+                
+                try {
+                    const loadingTask = window.pdfjsLib.getDocument({ data: pdfBytes });
+                    const pdf = await loadingTask.promise;
+                    
+                    let matchCount = 0; // Track total occurrences
+
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ').toLowerCase();
+
+                        // Count occurrences on the current page
+                        if (pageText.includes(keyword)) {
+                            // Split by the keyword to count how many times it splits the string
+                            const occurrences = pageText.split(keyword).length - 1;
+                            matchCount += occurrences;
+                        }
+                    }
+                    
+                    // Reply to LWC with the total count and a boolean if it was found at least once
+                    window.parent.postMessage({ 
+                        type: 'SCAN_RESULT', 
+                        found: matchCount > 0, 
+                        count: matchCount 
+                    }, '*');
+                    
+                } catch (error) {
+                    window.parent.postMessage({ type: 'SCAN_ERROR', error: error.message }, '*');
+                }
+            }
+        }, false);
+    </script>
+</apex:page>

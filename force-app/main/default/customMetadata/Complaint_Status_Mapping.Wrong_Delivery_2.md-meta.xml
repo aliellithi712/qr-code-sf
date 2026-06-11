@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Wrong Delivery 2</label>
+    <protected>false</protected>
+    <values>
+        <field>Category__c</field>
+        <value xsi:type="xsd:string">Wrong Delivery</value>
+    </values>
+    <values>
+        <field>Frigo__c</field>
+        <value xsi:type="xsd:string">N</value>
+    </values>
+    <values>
+        <field>Status__c</field>
+        <value xsi:type="xsd:string">Additional</value>
+    </values>
+    <values>
+        <field>Target_Text__c</field>
+        <value xsi:type="xsd:string">Goods Retrieval</value>
+    </values>
+</CustomMetadata>

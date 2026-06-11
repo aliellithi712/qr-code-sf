@@ -1,0 +1,32 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="slds-is-relative slds-align_absolute-center slds-p-around_xl" style="min-height: 250px;">
+            <lightning-spinner alternative-text="Generating PDF and QR Code..." size="large" variant="brand">
+            </lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <div
+            class="slds-box slds-theme_default slds-p-around_large slds-align_absolute-center slds-flex_column pdf-success-container">
+
+            <lightning-icon icon-name="action:approval" alternative-text="Success" size="small"
+                class="slds-m-bottom_small">
+            </lightning-icon>
+
+            <h2 class="slds-text-heading_medium slds-font-weight_bold slds-m-bottom_x-small" style="color: #2e7d32; margin-left: 10px;">
+                Voucher PDF Generated Successfully
+            </h2>
+
+        </div>
+    </template>
+
+    <div class="slds-hide slds-p-around_medium slds-align_absolute-center slds-flex_column">
+        <div class="qrcode2" lwc:dom="manual" style="height:200px; width:200px;"></div>
+    </div>
+
+        <iframe src="/apex/PdfParserPage" lwc:ref="pdfWorkerFrame" style="display:none;">
+        </iframe>
+
+
+</template>
