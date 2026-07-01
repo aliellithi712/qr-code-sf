@@ -125,7 +125,7 @@
             <name>Same</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record__Prior.Generate_Voucher__c</leftValueReference>
+                <leftValueReference>$Record.Generate_Voucher__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>true</booleanValue>
@@ -175,7 +175,7 @@
             <name>Copy_2_of_Same</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record__Prior.Generate_Voucher__c</leftValueReference>
+                <leftValueReference>$Record.Generate_Voucher__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -192,9 +192,12 @@
         <label>Display Button Check</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <defaultConnectorLabel>Display</defaultConnectorLabel>
+        <defaultConnector>
+            <targetReference>Hide_Button</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Hide</defaultConnectorLabel>
         <rules>
-            <name>Hide</name>
+            <name>Display</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
                 <leftValueReference>decrementVouchers</leftValueReference>
@@ -203,10 +206,7 @@
                     <elementReference>roundZero</elementReference>
                 </rightValue>
             </conditions>
-            <connector>
-                <targetReference>Hide_Button</targetReference>
-            </connector>
-            <label>Hide</label>
+            <label>Display</label>
         </rules>
     </decisions>
     <decisions>
