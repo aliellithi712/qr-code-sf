@@ -7,12 +7,18 @@ import { NavigationMixin } from 'lightning/navigation';
 import saveQRCodeFile from '@salesforce/apex/QRGenerateButtonController.saveQRCodeFile';
 import savePdf from '@salesforce/apex/QRGenerateButtonController.savePdf';
 import getLatestPDFAttachment from "@salesforce/apex/QRGenerateButtonController.getLatestPDFAttachment";
+import getRecordInfo from "@salesforce/apex/QRGenerateButtonController.getRecordInfo";
+import { CloseActionScreenEvent } from 'lightning/actions';
+import COMPANY_LOGO from '@salesforce/resourceUrl/Mersaco_Logo';
+
+
 
 export default class QRGenerateButton extends NavigationMixin(LightningElement) {
     isLoading = true;
     isLibraryLoaded = false;
     _recordId;
     scanResolver;
+    endFlag = false;
 
     @api
     get recordId() { return this._recordId; }
@@ -24,6 +30,7 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
     }
 
     renderedCallback() {
+        console.log(this.endFlag);
         if (this.isLibraryLoaded) return;
         loadScript(this, pdflib)
             .then(() => {
@@ -69,6 +76,11 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
             const encryptedToken = await generateEncryptedToken({ recordId: this._recordId });
             console.log('encrypted Token ' , encryptedToken);
 
+            const compliantInfo = await getRecordInfo({recordId: this.recordId})
+
+            console.log('Compliant Info ', compliantInfo , ' ' , compliantInfo.Category__c);
+
+
 
             const complaintName = await saveQRCodeFile({
                 recordId: this.recordId,
@@ -93,7 +105,7 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
                 tempDoc.addPage(copiedPage);
                 const tempBytes = await tempDoc.save();
 
-                const isKeywordOnPage = await this.scanSinglePageForText(tempBytes,'Customer Complaints Voucher');
+                const isKeywordOnPage = await this.scanSinglePageForText(tempBytes,'Account Code / Name:');
                 if (isKeywordOnPage) {
                     const hasR = await this.scanSinglePageForText( tempBytes, 'GOODS RETRIEVAL DATA');
                     const hasS = await this.scanSinglePageForText( tempBytes, 'SENDING GOODS DATA');
@@ -146,7 +158,16 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
                     relativePageCounter = 1;
                 }
 
-                this.inputValue = `24.${complaintName}.${activeSegment.status}.${relativePageCounter}of${activeSegment.size}`;
+
+                if(!compliantInfo.Category__c.includes('Labeling Issue') )
+                    this.inputValue = `24.${complaintName}.${relativePageCounter}.${activeSegment.size}`;
+                else
+                    this.inputValue = `24.${complaintName}.${activeSegment.status}.${relativePageCounter}.${activeSegment.size}`;
+
+
+                const logoResponse = await fetch(COMPANY_LOGO);
+                const logoArrayBuffer = await logoResponse.arrayBuffer();
+                const logoImage = await sourcePdfDoc.embedJpg(logoArrayBuffer);
 
                 const base64Data = await this.generateQR();
                 const imageBytes = Uint8Array.from(window.atob(base64Data), c => c.charCodeAt(0));
@@ -154,6 +175,39 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
                 const helveticaFont = await sourcePdfDoc.embedFont(window.PDFLib.StandardFonts.Helvetica);
                 const currentPage = pages[i];
                 const { width, height } = currentPage.getSize();
+
+                const startPagesList = segments.map(s => s.startPage);
+                if (startPagesList.includes(i + 1)) {
+
+                        const title = "Customer Complaints Voucher";
+                        const fontSize = 18;
+
+                        const font = await sourcePdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+                        const textWidth = font.widthOfTextAtSize(title, fontSize);
+                        const x = ((width - textWidth) / 2)  + 20;
+                        const y = height - 60;
+
+                        currentPage.drawText(title, {
+                            x,
+                            y,
+                            size: fontSize,
+                            font,
+                            color: rgb(0, 0, 0)
+                        });
+
+
+                        currentPage.drawImage(logoImage, {
+                            x: 20,
+                            y: height - 80,
+                            width: 120,
+                            height: 80
+                        });
+
+
+
+
+                }
 
                 const qrWidth = 65;    // Reduced from 90
                 const qrHeight = 65;   // Reduced from 90
@@ -214,6 +268,8 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
                 fileName: 'Stamped_Complaint_Document'
             });
 
+            this.endFlag = true
+
             this[NavigationMixin.Navigate]({
                 type: 'standard__namedPage',
                 attributes: {
@@ -223,6 +279,13 @@ export default class QRGenerateButton extends NavigationMixin(LightningElement) 
                     selectedRecordId: contentDocumentId
                 }
             });
+
+            /**
+
+            setTimeout(() => {
+                this.dispatchEvent(new CloseActionScreenEvent());
+            }, 2000);
+             */
 
         } catch (error) {
             console.error('Error saving PDF', error);

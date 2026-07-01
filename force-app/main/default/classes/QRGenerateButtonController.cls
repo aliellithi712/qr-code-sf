@@ -19,6 +19,12 @@ public with sharing class QRGenerateButtonController {
     }
 }
 
+    @AuraEnabled
+    public static Complaint__c getRecordInfo(Id recordId) {
+        return [Select Id,Category__c  FROM Complaint__c where id =: recordId];
+
+    }
+
 
 
     @AuraEnabled

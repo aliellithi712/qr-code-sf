@@ -18,10 +18,16 @@
                         <valueListItems>
                             <value>Complaint__c.Complaint_Voucher</value>
                             <visibilityRule>
+                                <booleanFilter>1 AND 2</booleanFilter>
                                 <criteria>
-                                    <leftValue>{!Record.Display_Voucher_Button__c}</leftValue>
+                                    <leftValue>{!Record.Applicable_Voucher_Items__c}</leftValue>
+                                    <operator>GT</operator>
+                                    <rightValue>0</rightValue>
+                                </criteria>
+                                <criteria>
+                                    <leftValue>{!Record.Scope__c}</leftValue>
                                     <operator>EQUAL</operator>
-                                    <rightValue>true</rightValue>
+                                    <rightValue>Operations &amp; Distribution</rightValue>
                                 </criteria>
                             </visibilityRule>
                         </valueListItems>

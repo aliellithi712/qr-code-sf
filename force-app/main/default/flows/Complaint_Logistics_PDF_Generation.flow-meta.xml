@@ -1,33 +1,287 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Get_Display_Status</name>
+        <label>Get Display Status</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>ComplaintStatusFlowHandler</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Outcome</targetReference>
+        </connector>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>category</name>
+            <value>
+                <elementReference>$Record.Complaint__r.Category__c</elementReference>
+                <inputConfiguratorMode>Resource</inputConfiguratorMode>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>frigo</name>
+            <value>
+                <elementReference>Frigo</elementReference>
+                <inputConfiguratorMode>Resource</inputConfiguratorMode>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>status</name>
+            <value>
+                <elementReference>$Record.Status__c</elementReference>
+                <inputConfiguratorMode>Resource</inputConfiguratorMode>
+            </value>
+        </inputParameters>
+        <nameSegment>ComplaintStatusFlowHandler</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
     <apiVersion>67.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_API_Frigo</name>
+        <label>Assign API Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Frigo</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.frigo__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Display_Status</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Assign_Manual_Frigo</name>
+        <label>Assign Manual Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Frigo</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.Frigo_Manual__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Display_Status</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Copy_1_of_Assign_Manual_Frigo</name>
+        <label>Copy 1 of Assign Manual Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Frigo</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.Product__r.Refrigerated__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Display_Status</targetReference>
+        </connector>
+    </assignments>
     <decisions>
-        <name>Display_the_button</name>
-        <label>Display the button</label>
+        <name>Align_Item</name>
+        <label>Align Item</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <defaultConnector>
-            <targetReference>Copy_1_of_Display_Button</targetReference>
+            <targetReference>Update_Manual_Frigo</targetReference>
         </defaultConnector>
-        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <defaultConnectorLabel>Not Aligned with Porduct</defaultConnectorLabel>
         <rules>
-            <name>Yes</name>
+            <name>Aligned_with_Product</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Get_Custom_Metadata_Mapping.Target_Text__c</leftValueReference>
+                <leftValueReference>$Record.Frigo_Manual__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.Product__r.Refrigerated__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <isGoTo>true</isGoTo>
+                <targetReference>Assign_Manual_Frigo</targetReference>
+            </connector>
+            <label>Aligned with Product</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_Old</name>
+        <label>Check Old</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Update_Invoice</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Changed</defaultConnectorLabel>
+        <rules>
+            <name>Same</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record__Prior.Generate_Voucher__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Display_Button</targetReference>
+            </connector>
+            <label>Same</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_Product_Frigo</name>
+        <label>Check Product Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Assign_Manual_Frigo</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Null</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Product__r.Refrigerated__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Align_Item</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Copy_2_of_Check_Old</name>
+        <label>Check Old</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Copy_1_of_Update_Invoice</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Changed</defaultConnectorLabel>
+        <rules>
+            <name>Copy_2_of_Same</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record__Prior.Generate_Voucher__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Display_Button_Check</targetReference>
+            </connector>
+            <label>Same</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Display_Button_Check</name>
+        <label>Display Button Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Display</defaultConnectorLabel>
+        <rules>
+            <name>Hide</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>decrementVouchers</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>roundZero</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Hide_Button</targetReference>
+            </connector>
+            <label>Hide</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Outcome</name>
+        <label>Outcome</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Copy_2_of_Check_Old</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Voucher</defaultConnectorLabel>
+        <rules>
+            <name>Voucher</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Display_Status.targetText</leftValueReference>
                 <operator>NotEqualTo</operator>
                 <rightValue>
                     <stringValue>No Voucher</stringValue>
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Display_Button</targetReference>
+                <targetReference>Check_Old</targetReference>
             </connector>
-            <label>Yes</label>
+            <label>Voucher</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Which_Frigo</name>
+        <label>Which Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Check_Product_Frigo</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Manual</defaultConnectorLabel>
+        <rules>
+            <name>API</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Is_API__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_API_Frigo</targetReference>
+            </connector>
+            <label>API</label>
         </rules>
     </decisions>
     <environments>Default</environments>
+    <formulas>
+        <name>decrementVouchers</name>
+        <dataType>Number</dataType>
+        <expression>IF( {!$Record.Complaint__r.Applicable_Voucher_Items__c} &gt; 0 , {!$Record.Complaint__r.Applicable_Voucher_Items__c} - 1, {!$Record.Complaint__r.Applicable_Voucher_Items__c})</expression>
+        <scale>2</scale>
+    </formulas>
+    <formulas>
+        <name>incrementVouchers</name>
+        <dataType>Number</dataType>
+        <expression>IF(
+    ISBLANK($Record.Complaint__r.Applicable_Voucher_Items__c),
+    1,
+    $Record.Complaint__r.Applicable_Voucher_Items__c + 1
+)</expression>
+        <scale>2</scale>
+    </formulas>
+    <formulas>
+        <name>roundZero</name>
+        <dataType>Number</dataType>
+        <expression>ROUND({!decrementVouchers}, 0)</expression>
+        <scale>2</scale>
+    </formulas>
     <interviewLabel>Complaint Management Logistics PDF Generation {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Complaint Logistics PDF Generation</label>
     <processMetadataValues>
@@ -49,39 +303,37 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
-    <recordLookups>
-        <name>Get_Custom_Metadata_Mapping</name>
-        <label>Get Custom Metadata Mapping</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Display_the_button</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>MasterLabel</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.Status__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Complaint_Status_Mapping__mdt</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
     <recordUpdates>
-        <name>Copy_1_of_Display_Button</name>
-        <label>Copy 1 of Display Button</label>
+        <name>Copy_1_of_Update_Complaint</name>
+        <label>Copy 1 of Update Complaint</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Display_Button_Check</targetReference>
+        </connector>
         <inputAssignments>
-            <field>Display_Voucher_Button__c</field>
+            <field>Applicable_Voucher_Items__c</field>
+            <value>
+                <elementReference>decrementVouchers</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record.Complaint__r</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Copy_1_of_Update_Invoice</name>
+        <label>Update Invoice</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Copy_1_of_Update_Complaint</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Generate_Voucher__c</field>
             <value>
                 <booleanValue>false</booleanValue>
             </value>
         </inputAssignments>
-        <inputReference>$Record.Complaint__r</inputReference>
+        <inputReference>$Record</inputReference>
     </recordUpdates>
     <recordUpdates>
         <name>Display_Button</name>
@@ -96,17 +348,85 @@
         </inputAssignments>
         <inputReference>$Record.Complaint__r</inputReference>
     </recordUpdates>
+    <recordUpdates>
+        <name>Hide_Button</name>
+        <label>Hide Button</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Display_Voucher_Button__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record.Complaint__r</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Complaint</name>
+        <label>Update Complaint</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Display_Button</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Applicable_Voucher_Items__c</field>
+            <value>
+                <elementReference>incrementVouchers</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record.Complaint__r</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Invoice</name>
+        <label>Update Invoice</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Complaint</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Generate_Voucher__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Manual_Frigo</name>
+        <label>Update Manual Frigo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Copy_1_of_Assign_Manual_Frigo</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Frigo_Manual__c</field>
+            <value>
+                <elementReference>$Record.Product__r.Refrigerated__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Get_Custom_Metadata_Mapping</targetReference>
+            <targetReference>Which_Frigo</targetReference>
         </connector>
         <object>Invoice_Line_Item__c</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
     <status>Active</status>
+    <variables>
+        <name>Frigo</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
     <variables>
         <name>InvoiceItemStatuses</name>
         <dataType>String</dataType>

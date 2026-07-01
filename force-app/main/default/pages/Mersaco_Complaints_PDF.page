@@ -1,224 +1,311 @@
-<apex:page controller="ComplaintPDFCustomController" renderAs="pdf" showHeader="false" applyHtmlTag="false" applyBodyTag="false">
-<head>
-    <style type="text/css">
-        @page {
-            size: A4 portrait;
-            /* Top margin expanded to 45mm to leave an empty ceiling area
-               on every page for the absolute table to stand in */
-            margin: 45mm 15mm 15mm 15mm;
+<apex:page controller="ComplaintPDFCustomController" renderAs="pdf" showHeader="false" applyHtmlTag="false"
+    applyBodyTag="false">
 
-            @bottom-right {
-                content: "Page " counter(page) " of " counter(pages);
-                font-family: Arial, sans-serif;
-                font-size: 10px;
-                color: #555;
+    <head>
+        <style type="text/css">
+            @page {
+                size: A4 portrait;
+                margin: 33mm 15mm 15mm 15mm;
+
+                @bottom-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-family: Arial, sans-serif;
+                    font-size: 10px;
+                    color: #555;
+                }
             }
-        }
 
-        body {
-            font-family: Arial, sans-serif;
-            color: #271f1f;
-            font-size: 14px;
-        }
+            body {
+                font-family: Arial, sans-serif;
+                color: #271f1f;
+                font-size: 14px;
+            }
 
-        .page-break {
-            page-break-before: always;
-        }
+            .page-break {
+                page-break-before: always;
+            }
 
-        .new-wrapper-sequence {
-            page-break-before: always;
-            -fs-page-sequence: start;
-        }
+            .new-wrapper-sequence {
+                page-break-before: always;
+                -fs-page-sequence: start;
+            }
 
-        .first-page {
-            page-break-before: avoid;
-        }
+            .first-page {
+                page-break-before: avoid;
+            }
 
-        .section-spacer {
-            height: 30px;
-        }
+            .section-spacer {
+                height: 30px;
+            }
 
-        /* DIRECT ABSOLUTE POSITIONING: No wrapper constraints.
-           Positions itself relative to the target page's layout coordinates. */
-        div.absolute-loop-header {
-            position: absolute;
-            top: 15mm; /* Positions it exactly inside the 45mm top margin canopy */
-            /* left: 15mm; */
-            /* right: 15mm; */
-            /* height: 90px; */
-            display: block;
-        }
-    </style>
-</head>
+            div.absolute-loop-header {
+                /*
+                position: absolute;
+                top: 40;
+                transform: translateY(-115px);
+                display: block;
+                */
+            }
+        </style>
+    </head>
 
-<body>
+    <body>
 
-    <apex:variable var="pageIdx" value="{!0}" />
-    <apex:outputPanel rendered="{!NOT(showBlankPage)}" layout="none">
+        <apex:variable var="pageIdx" value="{!0}" />
+        <apex:outputPanel rendered="{!NOT(showBlankPage)}" layout="none">
 
-        <apex:repeat value="{!pdfPages}" var="pageGroup">
-            <apex:repeat value="{!pageGroup}" var="wrapper">
+            <apex:repeat value="{!pdfPages}" var="pageGroup">
+                <apex:repeat value="{!pageGroup}" var="wrapper">
 
-                <div class="{!IF(wrapper == pdfPages[0][0], 'first-page', IF(wrapper == pageGroup[0], 'new-wrapper-sequence', 'page-break'))}">
+                    <div
+                        class="{!IF(wrapper == pdfPages[0][0], 'first-page', IF(wrapper == pageGroup[0], 'new-wrapper-sequence', 'page-break'))}">
+                        <!--
 
-                    <div class="absolute-loop-header">
-                        <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                        <div class="absolute-loop-header">
+                            <table class="pdf-logo"
+                                style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width: 180px; vertical-align: middle; text-align: left;">
+                                        <apex:image url="{!URLFOR($Resource.Mersaco_Logo)}" width="180" height="90" />
+                                    </td>
+                                    <td style="vertical-align: middle; text-align: center; padding: 0 10px;">
+                                        <h1 style="font-size: 22px; margin: 0; line-height: 1.2;">Customer Complaints
+                                            Voucher</h1>
+                                    </td>
+                                    <td style="width: 110px; vertical-align: top; text-align: right;">
+                                        <div style="width: 90px; height: 90px; display: block; float: right;"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                         -->
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px;">
                             <tr>
-                                <td style="width: 180px; vertical-align: middle; text-align: left;">
-                                    <apex:image url="{!URLFOR($Resource.Mersaco_Logo)}" width="180" height="90" />
+                                <td style="width: 50%; padding: 6px 4px;">
+                                    <strong>Date:</strong> {!todayDate}
                                 </td>
-                                <td style="vertical-align: middle; text-align: center; padding: 0 10px;">
-                                    <h1 style="font-size: 22px; margin: 0; line-height: 1.2;">Customer Complaints Voucher</h1>
+                                <td style="width: 50%; padding: 6px 4px;">
+                                    <strong>Complaint Date:</strong>&#160;
+                                    <apex:outputText value="{0, date, dd/MM/yyyy}">
+                                        <apex:param value="{!wrapper.complaint.createdDate}" />
+                                    </apex:outputText>
                                 </td>
-                                <td style="width: 110px; vertical-align: top; text-align: right;">
-                                    <div style="width: 90px; height: 90px; display: block; float: right;"></div>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Account Code / Name:</strong> {!wrapper.complaint.Account_Number__c} /
+                                    {!wrapper.complaint.Account_Name__r.Name}
+                                </td>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Wave Description:</strong> {!wrapper.complaint.Account_Wave_ID__c}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Invoice Number:</strong> {!wrapper.complaint.Invoice_Number__c}
+                                </td>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Reference#:</strong> {!wrapper.complaint.Name}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Order Number:</strong> {!wrapper.complaint.Order_Number__c}
+                                </td>
+                                <td style="padding: 6px 4px;">
+                                    <strong>Address:</strong>
+                                    {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine1__c}
+                                    /
+                                    {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine2__c}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 4px;" colspan="2">
+                                    <strong>Complaint Type:</strong> {!wrapper.complaint.Category__c}
                                 </td>
                             </tr>
                         </table>
-                    </div>
 
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px;">
-                        <tr>
-                            <td style="width: 50%; padding: 6px 4px;">
-                                <strong>Date:</strong> {!todayDate}
-                            </td>
-                            <td style="width: 50%; padding: 6px 4px;">
-                                <strong>Reference#:</strong> {!wrapper.complaint.Name}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 4px;">
-                                <strong>Account Code / Name:</strong> {!wrapper.complaint.Account_Number__c} / {!wrapper.complaint.Account_Name__r.Name}
-                            </td>
-                            <td style="padding: 6px 4px;">
-                                <strong>Wave Description:</strong> {!wrapper.complaint.Account_Wave_ID__c}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 4px;" colspan="2">
-                                <strong>Invoice Number:</strong> {!wrapper.complaint.Invoice_Number__c}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 4px;">
-                                <strong>Order Number:</strong> {!wrapper.complaint.Order_Number__c}
-                            </td>
-                            <td style="padding: 6px 4px;">
-                                <strong>Address:</strong> {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine1__c} / {!wrapper.complaint.Account_Name__r.OCE__PrimaryAccountAddress__r.OCE__AddressLine2__c}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 4px;" colspan="2">
-                                <strong>Complaint Type:</strong> {!wrapper.complaint.Category__c}
-                            </td>
-                        </tr>
-                    </table>
+                        <div class="section-spacer"></div>
 
-                    <div class="section-spacer"></div>
-
-                    <apex:outputPanel rendered="{!wrapper.status == 'Sending Goods'}" layout="none">
-                        <h2 style="font-size: 15px; margin: 10px 0;">SENDING GOODS DATA:</h2>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;" border="1">
-                            <thead style="background-color: #e8e8e8;">
-                                <tr style="height: 30px;">
-                                    <th style="padding: 6px;">Item Code</th>
-                                    <th style="padding: 6px;">Item Description</th>
-                                    <th style="padding: 6px;">Quantity</th>
-                                    <th style="padding: 6px;">Batch No.</th>
-                                    <th style="padding: 6px;">Expiry Date</th>
-                                    <th style="padding: 6px;">Frigo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <apex:repeat value="{!wrapper.items}" var="item">
-                                    <tr style="height: 26px;">
-                                        <td style="padding: 6px;">{!item.product_code__c}</td>
-                                        <td style="padding: 6px;">{!item.product_name__c}</td>
-                                        <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
-                                        <td style="padding: 6px;">{!item.lot__c}</td>
-                                        <td style="padding: 6px;">{!item.expiry_date__c}</td>
-                                        <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}</td>
+                        <!-- <apex:outputPanel rendered="{!wrapper.status == 'Sending Goods'}" layout="none"> -->
+                        <apex:outputPanel rendered="{!wrapper.status == 'Sending Goods' && !isWrongCategory}">
+                            <h2 style="font-size: 15px; margin: 10px 0;">SENDING GOODS DATA:</h2>
+                            <table
+                                style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;"
+                                border="1">
+                                <thead style="background-color: #e8e8e8;">
+                                    <tr style="height: 30px;">
+                                        <th style="padding: 6px;">Item Code</th>
+                                        <th style="padding: 6px;">Item Description</th>
+                                        <th style="padding: 6px;">Quantity</th>
+                                        <th style="padding: 6px;">Batch No.</th>
+                                        <th style="padding: 6px;">Expiry Date</th>
+                                        <th style="padding: 6px;">Frigo</th>
                                     </tr>
-                                </apex:repeat>
-                            </tbody>
-                        </table>
-                        <apex:repeat value="{!wrapper.items}" var="item">
-                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'Y', item.Frigo_Manual__c == 'Y')}" layout="none">
-                                <em>Storage Condition between 2-8 °C</em>
-                                <br/>
-                            </apex:outputPanel>
-                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'N', item.Frigo_Manual__c == 'N')}" layout="none">
-                                <em>Storage Condition between 15-25 °C</em>
-                                <br/>
-                            </apex:outputPanel>
-                        </apex:repeat>
-                    </apex:outputPanel>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!wrapper.sendingItems}" var="item">
+                                        <tr style="height: 26px;">
+                                            <td style="padding: 6px;">{!item.product_code__c}</td>
+                                            <td style="padding: 6px;">{!item.product_name__c}</td>
+                                            <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                            <td style="padding: 6px;">{!item.lot__c}</td>
+                                            <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                            <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c,
+                                                item.Frigo_Manual__c)}</td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                            <apex:repeat value="{!wrapper.sendingStorageConditions}" var="condition">
+                                <em>{!condition}</em>
+                                <br />
+                            </apex:repeat>
+                        </apex:outputPanel>
 
-                    <apex:outputPanel rendered="{!wrapper.status == 'Goods Retrieval'}" layout="none">
-                        <h2 style="font-size: 15px; margin: 10px 0;">GOODS RETRIEVAL DATA:</h2>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;" border="1">
-                            <thead style="background-color: #e8e8e8;">
-                                <tr style="height: 30px;">
-                                    <th style="padding: 6px;">Item Code</th>
-                                    <th style="padding: 6px;">Item Description</th>
-                                    <th style="padding: 6px;">Quantity</th>
-                                    <th style="padding: 6px;">Batch No.</th>
-                                    <th style="padding: 6px;">Expiry Date</th>
-                                    <th style="padding: 6px;">Frigo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <apex:repeat value="{!wrapper.items}" var="item">
-                                    <tr style="height: 26px;">
-                                        <td style="padding: 6px;">{!item.product_code__c}</td>
-                                        <td style="padding: 6px;">{!item.product_name__c}</td>
-                                        <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
-                                        <td style="padding: 6px;">{!item.lot__c}</td>
-                                        <td style="padding: 6px;">{!item.expiry_date__c}</td>
-                                        <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}</td>
+                        <!-- <apex:outputPanel rendered="{!wrapper.status == 'Goods Retrieval'}" laxyout="none"> -->
+                        <apex:outputPanel rendered="{!wrapper.status == 'Goods Retrieval' && !isWrongCategory}">
+                            <h2 style="font-size: 15px; margin: 10px 0;">GOODS RETRIEVAL DATA:</h2>
+                            <table
+                                style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; text-align: center;"
+                                border="1">
+                                <thead style="background-color: #e8e8e8;">
+                                    <tr style="height: 30px;">
+                                        <th style="padding: 6px;">Item Code</th>
+                                        <th style="padding: 6px;">Item Description</th>
+                                        <th style="padding: 6px;">Quantity</th>
+                                        <th style="padding: 6px;">Batch No.</th>
+                                        <th style="padding: 6px;">Expiry Date</th>
+                                        <th style="padding: 6px;">Frigo</th>
                                     </tr>
-                                </apex:repeat>
-                            </tbody>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!wrapper.retrievalItems}" var="item">
+                                        <tr style="height: 26px;">
+                                            <td style="padding: 6px;">{!item.product_code__c}</td>
+                                            <td style="padding: 6px;">{!item.product_name__c}</td>
+                                            <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                            <td style="padding: 6px;">{!item.lot__c}</td>
+                                            <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                            <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c,
+                                                item.Frigo_Manual__c)}</td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                            <apex:repeat value="{!Wrapper.retrievalStorageConditions}" var="condition">
+                                <em>{!condition}</em>
+                                <br />
+                            </apex:repeat>
+                        </apex:outputPanel>
+
+                        <!--  WRONG CATEGORY SECTION -->
+
+                        <apex:outputPanel rendered="{!wrapper.status == 'Wrong Category' && isWrongCategory}">
+                            <h2 style="font-size: 15px; margin: 10px 0;">SENDING GOODS DATA:</h2>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; text-align: center;" border="1">
+                                <thead style="background-color: #e8e8e8;">
+                                    <tr style="height: 30px;">
+                                        <th style="padding: 6px;">Item Code</th>
+                                        <th style="padding: 6px;">Item Description</th>
+                                        <th style="padding: 6px;">Quantity</th>
+                                        <th style="padding: 6px;">Batch No.</th>
+                                        <th style="padding: 6px;">Expiry Date</th>
+                                        <th style="padding: 6px;">Frigo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!wrapper.sendingItems}" var="item">
+                                        <tr style="height: 26px;">
+                                            <td style="padding: 6px;">{!item.product_code__c}</td>
+                                            <td style="padding: 6px;">{!item.product_name__c}</td>
+                                            <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                            <td style="padding: 6px;">{!item.lot__c}</td>
+                                            <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                            <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                            <apex:repeat value="{!wrapper.sendingStorageConditions}" var="condition">
+                                <em>{!condition}</em>
+                                <br />
+                            </apex:repeat>
+                        </apex:outputPanel>
+
+
+                        <apex:outputPanel rendered="{!wrapper.status == 'Wrong Category' && isWrongCategory}">
+                            <h2 style="font-size: 15px; margin: 10px 0;">GOODS RETRIEVAL DATA:</h2>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; text-align: center;" border="1">
+                                <thead style="background-color: #e8e8e8;">
+                                    <tr style="height: 30px;">
+                                        <th style="padding: 6px;">Item Code</th>
+                                        <th style="padding: 6px;">Item Description</th>
+                                        <th style="padding: 6px;">Quantity</th>
+                                        <th style="padding: 6px;">Batch No.</th>
+                                        <th style="padding: 6px;">Expiry Date</th>
+                                        <th style="padding: 6px;">Frigo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!wrapper.retrievalItems}" var="item">
+                                        <tr style="height: 26px;">
+                                            <td style="padding: 6px;">{!item.product_code__c}</td>
+                                            <td style="padding: 6px;">{!item.product_name__c}</td>
+                                            <td style="padding: 6px;">{!item.Variance_Quantity__c}</td>
+                                            <td style="padding: 6px;">{!item.lot__c}</td>
+                                            <td style="padding: 6px;">{!item.expiry_date__c}</td>
+                                            <td style="padding: 6px;">{!IF(item.Is_API__c, item.frigo__c, item.Frigo_Manual__c)}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                            <apex:repeat value="{!wrapper.retrievalStorageConditions}" var="condition">
+                                <em>{!condition}</em>
+                                <br />
+                            </apex:repeat>
+                        </apex:outputPanel>
+
+                        <!-- END OF WRONG CATEGORY SECTION -->
+
+                        <div class="section-spacer"></div>
+
+                        <h2 style="font-size: 15px; margin: 15px 0 8px 0; text-align: center;">Account Name / Signature
+                            and Stamp / Date</h2>
+                        <table style="width: 100%; border: 1px solid #000; height: 140px; margin-bottom: 35px;">
+                            <tr>
+                                <td style="height: 140px;"></td>
+                            </tr>
                         </table>
-                        <apex:repeat value="{!wrapper.items}" var="item">
-                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'Y', item.Frigo_Manual__c == 'Y')}" layout="none">
-                                <em>Storage Condition between 2-8 °C</em>
-                            </apex:outputPanel>
 
-                            <apex:outputPanel rendered="{!IF(item.Is_API__c, item.frigo__c == 'N', item.Frigo_Manual__c == 'N')}" layout="none">
-                                <em>Storage Condition between 15-25 °C</em>
-                            </apex:outputPanel>
-                        </apex:repeat>
-                    </apex:outputPanel>
-
-                    <div class="section-spacer"></div>
-
-                    <h2 style="font-size: 15px; margin: 15px 0 8px 0; text-align: center;">Account Name / Signature and Stamp / Date</h2>
-                    <table style="width: 100%; border: 1px solid #000; height: 140px; margin-bottom: 35px;">
-                        <tr>
-                            <td style="height: 140px;"></td>
-                        </tr>
-                    </table>
-
-                    <div style="margin-top: 30px; font-size: 13px;">
-                        <p style="text-align: left; line-height: 1.5; margin-bottom: 12px;">
-                            <strong style="text-decoration: underline;">Terms and Conditions:</strong><br/>
-                            No returns will be accepted if not presented on this form, stamped, dated, and signed by the client.<br/>
-                            All goods withdrawn related to mislabeling complaints will be retrieved, returned, relabeled, and dispatched back to the customer according to the product storage conditions: Refrigerated or Ambient.
-                        </p>
-                        <p style="text-align: left; font-size: 13px; margin-bottom: 35px;">
-                            *Refer to supportive document in case complaint content does not fit on this customer complaint voucher page.*
-                        </p>
-                        <p style="text-align: right; font-size: 10px; font-style: italic; margin: 0; line-height: 1.4;">
-                            CUSTOMER COMPLAINT VOUCHER — DISTRIBUTION DIVISION, LOGISTICS OPERATION.
-                        </p>
+                        <div style="margin-top: 30px; font-size: 13px;">
+                            <p style="text-align: left; line-height: 1.5; margin-bottom: 12px;">
+                                <strong style="text-decoration: underline;">Terms and Conditions:</strong><br />
+                                No returns will be accepted if not presented on this form, stamped, dated, and signed by
+                                the client.<br />
+                                All goods withdrawn related to mislabeling complaints will be retrieved, returned,
+                                relabeled, and dispatched back to the customer according to the product storage
+                                conditions: Refrigerated or Ambient.
+                            </p>
+                            <p style="text-align: left; font-size: 13px; margin-bottom: 35px;">
+                                *Refer to supportive document in case complaint content does not fit on this customer
+                                complaint voucher page.*
+                            </p>
+                            <p
+                                style="text-align: right; font-size: 10px; font-style: italic; margin: 0; line-height: 1.4;">
+                                CUSTOMER COMPLAINT VOUCHER — DISTRIBUTION DIVISION, LOGISTICS OPERATION.
+                            </p>
+                        </div>
                     </div>
-                </div>
-                <apex:variable var="pageIdx" value="{!pageIdx + 1}" />
+                    <apex:variable var="pageIdx" value="{!pageIdx + 1}" />
+                </apex:repeat>
             </apex:repeat>
-        </apex:repeat>
-    </apex:outputPanel>
+        </apex:outputPanel>
 
-    <apex:outputPanel rendered="{!showBlankPage}" layout="block"></apex:outputPanel>
-</body>
+        <apex:outputPanel rendered="{!showBlankPage}" layout="block"></apex:outputPanel>
+    </body>
 </apex:page>

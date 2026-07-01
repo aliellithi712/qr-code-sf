@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <collectionProcessors>
+        <name>Invalid_Invoice_Items</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Invalid Invoice Items</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNextValueToReference>currentItem_Filter_Invoice_Items</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>Get_Invoice_Items</collectionReference>
+        <conditionLogic>formula_evaluates_to_true</conditionLogic>
+        <connector>
+            <targetReference>Check_Validity</targetReference>
+        </connector>
+        <formula>OR(
+    /* Scenario 1: Wrong Product, Batch, or Delivery mismatches */
+    AND(
+        OR(
+            ISPICKVAL({!$Record.Category__c}, &quot;Wrong Product&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Wrong Batch&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Wrong Delivery&quot;)
+        ),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Missing&quot;)),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Additional&quot;))
+    ),
+    
+    /* Scenario 2: Additional Quantity/Product mismatch */
+    AND(
+        ISPICKVAL({!$Record.Category__c}, &quot;Additional Quantity/Product&quot;),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Additional&quot;))
+    ),
+    
+    /* Scenario 3: Damaged/Broken mismatch */
+    AND(
+        ISPICKVAL({!$Record.Category__c}, &quot;Damaged/Broken&quot;),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Damaged&quot;))
+    ),
+    
+    /* Scenario 4: Documentation Issue mismatches */
+    AND(
+        OR(
+            ISPICKVAL({!$Record.Category__c}, &quot;Documentation Issue - Wrong Credit Note&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Documentation Issue - Wrong Receipt&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Documentation Issue - Wrong/Missing Invoice&quot;)
+        ),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Wrong Docs&quot;))
+    ),
+    
+    /* Scenario 5: Labeling Issue mismatches */
+    AND(
+        OR(
+            ISPICKVAL({!$Record.Category__c}, &quot;Labeling Issue - Damaged&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Labeling Issue - Not Labeled&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Labeling Issue - Wrong Price Tag&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Labeling Issue - Wrong Registration Number&quot;)
+        ),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Mislabeling&quot;))
+    ),
+    
+    /* Scenario 6: Late Arrival mismatches */
+    AND(
+        OR(
+            ISPICKVAL({!$Record.Category__c}, &quot;Late Arrival - Customer Complaint&quot;),
+            ISPICKVAL({!$Record.Category__c}, &quot;Late Arrival - Dispatch&quot;)
+        ),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Order Not Received&quot;))
+    ),
+    
+    /* Scenario 7: Missing Quantity mismatch */
+    AND(
+        ISPICKVAL({!$Record.Category__c}, &quot;Missing Quantity&quot;),
+        NOT(ISPICKVAL({!currentItem_Filter_Invoice_Items.Status__c}, &quot;Missing&quot;))
+    )
+)</formula>
+    </collectionProcessors>
+    <customErrors>
+        <name>Custom_Error_Message_1</name>
+        <label>Custom Error Message 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <customErrorMessages>
+            <errorMessage>Cannot save Complaint: At least one related Invoice Line Item status conflicts with the chosen Complaint Category configuration.</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <name>Check_Validity</name>
+        <label>Check Validity</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Custom_Error_Message_1</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Invalid</defaultConnectorLabel>
+        <rules>
+            <name>Valid</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Invalid_Invoice_Items</leftValueReference>
+                <operator>IsEmpty</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <label>Valid</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>Category_Formula_Mirror</name>
+        <dataType>String</dataType>
+        <expression>TEXT({!$Record.Category__c})</expression>
+    </formulas>
+    <interviewLabel>Complaint: Validate Related Line Item Statuses on Update {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Complaint: Validate Related Line Item Statuses on Update</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Invoice_Items</name>
+        <label>Get Invoice Items</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Invalid_Invoice_Items</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Complaint__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Invoice_Line_Item__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Invoice_Items</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Category__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Complaint__c</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>currentItem_Filter_Invoice_Items</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Invoice_Line_Item__c</objectType>
+    </variables>
+</Flow>
